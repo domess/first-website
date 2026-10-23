@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dolores Messer</title>
+
+    <!-- Load D3.js from a CDN -->
+    <!-- script: execute javascript; CDN: Content Delivery Network, D3 available through global variable d3 -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 900px;
+        margin: 40px auto; /* here: centres the page */
+        padding: 0 20px;
+        line-height: 1.6;
+      }
+
+      header,
+      footer {
+        margin-bottom: 30px;
+      }
+      /* links inside the navigation */
+      nav a {
+        color: steelblue;
+      }
+      /* 
+      . refers to a class
+      */
+      .chart-container {
+        max-width: 650px;
+        margin: 30px 0;
+      }
+      /* 
+      block: prevents the SVG from behaving like an inline text element 
+      auto: preserves proportions 
+      */
+      .chart-container svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .bar {
+        fill: steelblue;
+      }
+
+      .bar:hover {
+        fill: orange;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h1>Dolores Messer</h1>
+      <nav>
+        <a href="/">Home</a> | <a href="/about">About</a> |
+        <a href="/contact">Contact</a>
+      </nav>
+    </header>
+
+    <main>
+      <img src="pic.jpg" alt="A picture of me" width="189.5" height="252.75" />
+
+      <p>
+        My background is a rather unusual mix of mathematical modelling, visual
+        computing, physics and economics. During my PhD, I worked with 3D
+        scanning of seal skulls, turning physical specimens into high-resolution
+        3D models and developing workflows to process the scans, analyse 3D
+        coordinates and validate digital measurement methods. I have worked with
+        various types of data, from images and 3D data to experimental
+        measurements and surveys. <br />
+        Visualisation was for a long time simply part of doing research.
+        Recently, I discovered the much broader field of data visualisatios and
+        the community around it, and I found that surprisingly exciting! Since
+        then, I have been exploring dataviz more deliberately, learning new
+        tools and techniques, and experimenting with my own projects.
+      </p>
+
+      <p>
+        I am currently exploring D3 through
+        <a
+          href="https://www.react-graph-gallery.com/react-d3-dataviz-course"
+          target="_blank"
+          rel="noopener noreferrer"
+          >an online course</a
+        >.
+      </p>
+
+      <!-- D3 bar chart -->
+      <!-- div is empty, since javascript is creating the chart -->
+      <section>
+        <h2>My first D3 bar chart</h2>
+        <div id="chart" class="chart-container"></div>
+      </section>
+
+      <script>
+        const data = [
+          { name: "A", value: 1 },
+          { name: "B", value: 5 },
+          { name: "C", value: 8 },
+          { name: "D", value: 10 },
+        ];
+
+        // Chart dimensions
+        // Margins and plotting area together is width and height
+        const width = 600;
+        const height = 350;
+        const margin = {
+          top: 30,
+          right: 20,
+          bottom: 50,
+          left: 45,
+        };
+
+        // Plotting area dimensions (inner width and inner height)
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+
+        // Create the SVG drawing area
+        const svg = d3
+          .select("#chart") // # is the ID selector
+          .append("svg") // Create SVG element and insert inside the div with ID "chart"
+          .attr("viewBox", `0 0 ${width} ${height}`) // set the coordinate system (minimum x, minimum y, width, height)
+          .attr("preserveAspectRatio", "xMidYMid meet"); // preserve proportions, centre the drawing area
+
+        const chart = svg
+          .append("g") // group element to group SVG elements together
+          .attr("transform", `translate(${margin.left},${margin.top})`); // move the group element to the right and down by the margin values
+
+        // Scales translate data values into positions on the screen
+        // X scale: positions the categories
+        const x = d3
+          .scaleBand()
+          .domain(data.map((d) => d.name)) // names of the categories
+          .range([0, innerWidth]) // positioning from 0 to innerWidth
+          .padding(0.25);
+
+        // Y scale: maps values to vertical positions
+        const y = d3
+          .scaleLinear()
+          .domain([0, d3.max(data, (d) => d.value)])
+          .nice() // convenient rounded values for the domain
+          .range([innerHeight, 0]); // runs backwards, because SVG y=0 is at the top
+
+        // Horizontal grid lines
+        chart
+          .append("g")
+          .call(d3.axisLeft(y).tickSize(-innerWidth).tickFormat(""))
+          .call((g) => g.select(".domain").remove())
+          .call((g) =>
+            g
+              .selectAll("line")
+              .attr("stroke", "#ddd")
+              .attr("stroke-dasharray", "3,3"),
+          );
+
+        // Draw the bars
+        chart
+          .selectAll(".bar")
+          .data(data)
+          .join("rect")
+          .attr("class", "bar")
+          .attr("x", (d) => x(d.name))
+          .attr("y", (d) => y(d.value))
+          .attr("width", x.bandwidth())
+          .attr("height", (d) => innerHeight - y(d.value));
+
+        // Add value labels above the bars
+        chart
+          .selectAll(".value-label")
+          .data(data)
+          .join("text")
+          .attr("class", "value-label")
+          .attr("x", (d) => x(d.name) + x.bandwidth() / 2)
+          .attr("y", (d) => y(d.value) - 8)
+          .attr("text-anchor", "middle")
+          .attr("fill", "#333")
+          .attr("font-size", 13)
+          .text((d) => d.value);
+
+        // X axis
+        chart
+          .append("g")
+          .attr("transform", `translate(0,${innerHeight})`)
+          .call(d3.axisBottom(x));
+
+        // Y axis
+        chart.append("g").call(d3.axisLeft(y).ticks(5));
+      </script>
+
+      <p>A few things I enjoy:</p>
+      <ul>
+        <li>Cooking healthy and tasty food</li>
+        <li>Reading crime and fantasy novels</li>
+        <li>Playing the piano, clarinet and recorder</li>
+      </ul>
+
+      <p>A few TV series I love:</p>
+      <ol>
+        <li>Exit</li>
+        <li>The Closer</li>
+        <li>The Good Wife</li>
+        <li>The House of Dreams (Das Haus der Träume)</li>
+      </ol>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 Dolores Messer</p>
+    </footer>
+  </body>
+</html>
